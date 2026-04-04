@@ -2,6 +2,11 @@
 
 A **fully private, portable, uncensored AI assistant** that runs 100% from a USB flash drive. No internet needed after setup. No data leaves the USB. Works on both **Windows** and **Mac**.
 
+
+## 📺 Watch the Tutorial
+
+[![Portable AI USB Tutorial](https://img.youtube.com/vi/cqrMfO6AZRU/maxresdefault.jpg)](https://youtu.be/cqrMfO6AZRU)
+
 ## ⚡ What's Inside
 
 | Component | Purpose |

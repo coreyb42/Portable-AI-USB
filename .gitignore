@@ -7,3 +7,6 @@ home/
 logs/
 tmp/
 models/
+.venv/
+.portable_tools/
+python-tools/portable_ai_tools/__pycache__/

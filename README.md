@@ -49,22 +49,62 @@ You can also pass direct Ollama commands through the launcher:
 ./start-unix.sh run gemma4:e4b
 ```
 
+## Python File Tools
+
+The repo now includes a portable Python toolkit intended for LLM-facing file access on the USB drive:
+
+- `browse`: directory listing with metadata
+- `search`: path and text search across supported files
+- `read`: structured reader for text, PDF, and EPUB files
+- `index`: semantic chunk indexing into a SQLite database on the drive
+- `semantic-search`: embedding search against the indexed chunks
+
+Setup:
+
+```bash
+chmod +x install-python-tools.sh usb-tools
+./install-python-tools.sh
+```
+
+Examples:
+
+```bash
+./usb-tools browse .
+./usb-tools search "portable ollama" .
+./usb-tools read README.md
+./usb-tools doctor
+./usb-tools doctor --check-server
+./usb-tools index .
+./usb-tools semantic-search "Where is the Ollama model store configured?"
+```
+
+Implementation notes:
+
+- The Python tools keep state under `.portable_tools/` on the USB drive
+- Semantic search uses the local Ollama installation from this repo, not a host install
+- The embedding model defaults to `nomic-embed-text` and is configured in `portable-ai.conf`
+- `doctor --check-server` validates that the portable Ollama runtime can actually start on the current machine before you spend time indexing
+
 ## Portable Layout
 
 ```text
 Portable-AI-USB/
 ├── install.bat
 ├── install-core.ps1
+├── install-python-tools.sh
 ├── install-unix.sh
+├── python-tools/
 ├── start-windows.bat
 ├── start-mac.command
 ├── start-linux.sh
 ├── start-unix.sh
 ├── portable-ai.conf
+├── usb-tools
 ├── ollama/
 │   ├── macos/
 │   ├── linux-<arch>/
 │   └── models/
+├── .portable_tools/
 ├── home/
 └── logs/
 ```

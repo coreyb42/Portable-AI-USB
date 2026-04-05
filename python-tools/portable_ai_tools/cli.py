@@ -10,42 +10,6 @@ from .config import load_settings
 from .ollama_runtime import ensure_model, ensure_server, find_ollama_binary, server_running
 
 
-def cmd_browse(args: argparse.Namespace) -> dict:
-    settings = load_settings()
-    return tool_map(settings)["browse"](
-        path=args.path,
-        limit=args.limit,
-        recursive=args.recursive,
-        max_depth=args.max_depth,
-        include_hidden=args.include_hidden,
-    )
-
-
-def cmd_search(args: argparse.Namespace) -> dict:
-    settings = load_settings()
-    return tool_map(settings)["search"](query=args.query, path=args.path, limit=args.limit)
-
-
-def cmd_read(args: argparse.Namespace) -> dict:
-    settings = load_settings()
-    return tool_map(settings)["read"](
-        path=args.path,
-        max_chars=args.max_chars,
-        include_sections=args.include_sections,
-        max_sections=args.max_sections,
-    )
-
-
-def cmd_index(args: argparse.Namespace) -> dict:
-    settings = load_settings()
-    return tool_map(settings)["index"](path=args.path, limit=args.limit)
-
-
-def cmd_semantic_search(args: argparse.Namespace) -> dict:
-    settings = load_settings()
-    return tool_map(settings)["semantic_search"](query=args.query, limit=args.limit)
-
-
 def cmd_doctor(args: argparse.Namespace) -> dict:
     settings = load_settings()
     payload = {
@@ -195,39 +159,8 @@ def cmd_chat(args: argparse.Namespace) -> dict:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Portable USB AI file tools.")
+    parser = argparse.ArgumentParser(description="Portable Ollama agent for the external drive.")
     subparsers = parser.add_subparsers(dest="command", required=True)
-
-    browse = subparsers.add_parser("browse", help="List files/directories.")
-    browse.add_argument("path", nargs="?", default=".")
-    browse.add_argument("--limit", type=int, default=200)
-    browse.add_argument("--recursive", action="store_true")
-    browse.add_argument("--max-depth", type=int, default=2)
-    browse.add_argument("--include-hidden", action="store_true")
-    browse.set_defaults(func=cmd_browse)
-
-    search = subparsers.add_parser("search", help="Search paths and file text.")
-    search.add_argument("query")
-    search.add_argument("path", nargs="?", default=".")
-    search.add_argument("--limit", type=int, default=20)
-    search.set_defaults(func=cmd_search)
-
-    read = subparsers.add_parser("read", help="Read a text, PDF, or EPUB file.")
-    read.add_argument("path")
-    read.add_argument("--max-chars", type=int, default=12000)
-    read.add_argument("--include-sections", action="store_true")
-    read.add_argument("--max-sections", type=int, default=20)
-    read.set_defaults(func=cmd_read)
-
-    index = subparsers.add_parser("index", help="Build semantic index for supported files.")
-    index.add_argument("path", nargs="?", default=".")
-    index.add_argument("--limit", type=int)
-    index.set_defaults(func=cmd_index)
-
-    semantic = subparsers.add_parser("semantic-search", help="Query the semantic index.")
-    semantic.add_argument("query")
-    semantic.add_argument("--limit", type=int, default=5)
-    semantic.set_defaults(func=cmd_semantic_search)
 
     doctor = subparsers.add_parser("doctor", help="Inspect portable tool and Ollama runtime status.")
     doctor.add_argument("--check-server", action="store_true")

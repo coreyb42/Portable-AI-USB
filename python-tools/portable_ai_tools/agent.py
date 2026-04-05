@@ -143,7 +143,7 @@ class ToolContext:
           Extracted text and metadata for the file.
         """
         target = resolve_in_scope(self.settings, path)
-        result = read_path(target)
+        result = read_path(target, max_file_bytes=self.settings.max_read_file_mb * 1024 * 1024)
         payload = {
             "path": display_path(self.settings, target),
             "file_type": result.file_type,

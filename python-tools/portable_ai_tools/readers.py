@@ -17,6 +17,10 @@ TEXT_EXTENSIONS = {
 }
 
 
+class FileTooLargeError(ValueError):
+    pass
+
+
 @dataclass
 class ReadResult:
     path: str
@@ -51,7 +55,18 @@ def _is_probably_text(path: Path) -> bool:
     return bool(mime and (mime.startswith("text/") or mime in {"application/json", "application/xml"}))
 
 
-def read_text_file(path: Path) -> ReadResult:
+def _enforce_size_limit(path: Path, max_file_bytes: int | None) -> None:
+    if max_file_bytes is None:
+        return
+    size = path.stat().st_size
+    if size > max_file_bytes:
+        raise FileTooLargeError(
+            f"File is too large to process safely: {path} ({size} bytes > {max_file_bytes} byte limit)"
+        )
+
+
+def read_text_file(path: Path, max_file_bytes: int | None = None) -> ReadResult:
+    _enforce_size_limit(path, max_file_bytes)
     text = path.read_text(encoding="utf-8", errors="replace")
     lines = text.splitlines()
     sections: list[dict] = []
@@ -77,7 +92,8 @@ def read_text_file(path: Path) -> ReadResult:
     )
 
 
-def read_pdf_file(path: Path) -> ReadResult:
+def read_pdf_file(path: Path, max_file_bytes: int | None = None) -> ReadResult:
+    _enforce_size_limit(path, max_file_bytes)
     from pypdf import PdfReader
 
     reader = PdfReader(str(path))
@@ -97,7 +113,8 @@ def read_pdf_file(path: Path) -> ReadResult:
     )
 
 
-def read_epub_file(path: Path) -> ReadResult:
+def read_epub_file(path: Path, max_file_bytes: int | None = None) -> ReadResult:
+    _enforce_size_limit(path, max_file_bytes)
     with zipfile.ZipFile(path) as archive:
         container_root = ElementTree.fromstring(archive.read("META-INF/container.xml"))
         rootfile = container_root.find(".//{*}rootfile")
@@ -132,14 +149,14 @@ def read_epub_file(path: Path) -> ReadResult:
     )
 
 
-def read_path(path: Path) -> ReadResult:
+def read_path(path: Path, max_file_bytes: int | None = None) -> ReadResult:
     suffix = path.suffix.lower()
     if suffix == ".pdf":
-        return read_pdf_file(path)
+        return read_pdf_file(path, max_file_bytes=max_file_bytes)
     if suffix == ".epub":
-        return read_epub_file(path)
+        return read_epub_file(path, max_file_bytes=max_file_bytes)
     if _is_probably_text(path):
-        return read_text_file(path)
+        return read_text_file(path, max_file_bytes=max_file_bytes)
     raise ValueError(f"Unsupported file type for reading: {path}")
 
 

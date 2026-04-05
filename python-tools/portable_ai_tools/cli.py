@@ -217,7 +217,8 @@ def cmd_maint_refresh(args: argparse.Namespace) -> dict:
         print(
             f"[refresh] {current}/{total} {status:<9} "
             f"updated={update['updated']} unchanged={update['unchanged']} "
-            f"duplicates={update['duplicates']} errors={update['errors']} :: {path}"
+            f"duplicates={update['duplicates']} skipped_large={update.get('skipped_large', 0)} "
+            f"errors={update['errors']} :: {path}"
         )
 
     print(f"Refreshing library index under: {target}")

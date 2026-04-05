@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .config import Settings
 from .ollama_runtime import embed_text
-from .readers import ReadResult, read_path, supported_for_reading
+from .readers import FileTooLargeError, ReadResult, read_path, supported_for_reading
 
 
 CHUNK_SIZE = 1400
@@ -281,6 +281,7 @@ def refresh_library(
     unchanged = 0
     duplicates = 0
     errors = 0
+    skipped_large = 0
     paths = _walk_files(target)
     total = len(paths)
     if limit is not None:
@@ -292,7 +293,24 @@ def refresh_library(
         display_path = _relative_display(settings.scope_root, path)
         stat = path.stat()
         try:
-            content = read_path(path)
+            content = read_path(path, max_file_bytes=settings.max_read_file_mb * 1024 * 1024)
+        except FileTooLargeError:
+            skipped_large += 1
+            if progress_callback:
+                progress_callback(
+                    {
+                        "current": processed,
+                        "total": total,
+                        "path": display_path,
+                        "status": "skipped_large",
+                        "updated": updated,
+                        "unchanged": unchanged,
+                        "duplicates": duplicates,
+                        "errors": errors,
+                        "skipped_large": skipped_large,
+                    }
+                )
+            continue
         except Exception:
             errors += 1
             if progress_callback:
@@ -306,6 +324,7 @@ def refresh_library(
                         "unchanged": unchanged,
                         "duplicates": duplicates,
                         "errors": errors,
+                        "skipped_large": skipped_large,
                     }
                 )
             continue
@@ -333,6 +352,7 @@ def refresh_library(
                         "unchanged": unchanged,
                         "duplicates": duplicates,
                         "errors": errors,
+                        "skipped_large": skipped_large,
                     }
                 )
             continue
@@ -448,6 +468,7 @@ def refresh_library(
                     "unchanged": unchanged,
                     "duplicates": duplicates,
                     "errors": errors,
+                    "skipped_large": skipped_large,
                 }
             )
 
@@ -458,6 +479,7 @@ def refresh_library(
         "unchanged_files": unchanged,
         "duplicate_files": duplicates,
         "error_files": errors,
+        "skipped_large_files": skipped_large,
         "database": str(settings.index_db),
     }
 
@@ -533,7 +555,9 @@ def locate_exact_phrase(
     results: list[dict] = []
     for path in _walk_files(root_dir):
         try:
-            content = read_path(path)
+            content = read_path(path, max_file_bytes=settings.max_read_file_mb * 1024 * 1024)
+        except FileTooLargeError:
+            continue
         except Exception:
             continue
         display_path = _relative_display(settings.scope_root, path)
@@ -608,7 +632,7 @@ def plain_text_search(root_dir: Path, query: str, limit: int = 20, filters: dict
             results.append({"path": rel_path, "match_type": "path", "metadata": base_metadata})
             continue
         try:
-            content = read_path(path)
+            content = read_path(path, max_file_bytes=settings.max_read_file_mb * 1024 * 1024)
         except Exception:
             continue
         content_lower = content.text.lower()

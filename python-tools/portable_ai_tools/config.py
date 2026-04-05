@@ -29,6 +29,7 @@ class Settings:
     model_name: str
     embed_model: str
     ollama_host: str
+    max_read_file_mb: int
 
 
 def load_settings() -> Settings:
@@ -45,4 +46,5 @@ def load_settings() -> Settings:
         model_name=conf.get("MODEL_NAME", "gemma4:e4b"),
         embed_model=conf.get("EMBED_MODEL", "nomic-embed-text"),
         ollama_host=os.environ.get("OLLAMA_HOST", conf.get("OLLAMA_HOST", "127.0.0.1:11434")),
+        max_read_file_mb=int(conf.get("MAX_READ_FILE_MB", "512")),
     )

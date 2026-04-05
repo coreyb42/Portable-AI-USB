@@ -1,0 +1,9 @@
+ollama/
+anythingllm/
+anythingllm_app/
+anythingllm_mac/
+anythingllm_data/
+home/
+logs/
+tmp/
+models/

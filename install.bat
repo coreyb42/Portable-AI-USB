@@ -3,11 +3,11 @@ title Portable AI - One-Click Setup
 color 0E
 
 echo ===================================================
-echo     PORTABLE UNCENSORED AI - USB SETUP             
+echo     PORTABLE AI USB - WINDOWS SETUP                
 echo ===================================================
 echo.
 echo This will download everything you need onto this
-echo USB drive. Total download size: ~6 GB.
+echo USB drive. Total download size is roughly 12+ GB.
 echo.
 echo Make sure you have a good internet connection!
 echo.

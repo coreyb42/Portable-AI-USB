@@ -1,77 +1,80 @@
-# 🔒 Portable Uncensored AI — Runs Entirely from a USB Drive
+# Portable Ollama USB
 
-A **fully private, portable, uncensored AI assistant** that runs 100% from a USB flash drive. No internet needed after setup. No data leaves the USB. Works on both **Windows** and **Mac**.
+Portable Ollama install for an external drive, with a shared model store and launchers for Windows, macOS, and Linux.
 
+The default model is `gemma4:e4b`, pulled from the official Ollama library. As of April 5, 2026, Ollama lists `gemma4:e4b` as the current edge-friendly 4B Gemma 4 variant: https://ollama.com/library/gemma4
 
-## 📺 Watch the Tutorial
+## What This Fork Does
 
-[![Portable AI USB Tutorial](https://img.youtube.com/vi/cqrMfO6AZRU/maxresdefault.jpg)](https://youtu.be/cqrMfO6AZRU)
+- Keeps Ollama binaries on the external drive instead of installing system-wide
+- Keeps model data on the external drive with `OLLAMA_MODELS`
+- Uses per-platform portable home/config directories on the drive for macOS and Linux
+- Defaults to `gemma4:e4b`
+- Keeps downloaded runtimes and models out of git via `.gitignore`
 
-## ⚡ What's Inside
+## Requirements
 
-| Component | Purpose |
-|-----------|---------|
-| **Dolphin 2.9 LLaMA 3 8B** | Uncensored AI model (~5.7 GB) |
-| **Ollama** | Lightweight AI engine that runs the model |
-| **AnythingLLM** | Beautiful chat interface |
+- exFAT is still the best filesystem choice for cross-platform use
+- At least 20 GB free space is realistic for `gemma4:e4b` plus platform runtimes
+- Internet access is only needed during install and model download
 
-## 🚀 Setup (One Time Only)
+## Setup
 
-### What You Need
-- A USB flash drive with **at least 16 GB** of free space (32 GB recommended)
-- Format the USB as **exFAT** (works on both Windows and Mac)
-- An internet connection for the initial download (~6 GB total)
+### Windows
 
-### Steps
+1. Run `install.bat`
+2. Wait for Ollama, AnythingLLM, and `gemma4:e4b` to download
+3. Start with `start-windows.bat`
 
-1. **Download this repo** and copy ALL files to your USB drive
-2. **Double-click `install.bat`** on the USB drive
-3. Wait for everything to download (~15-30 minutes depending on internet speed)
-4. **Done!** Your portable AI is ready to use
+### macOS or Linux
 
-## ▶️ How to Use
+1. Run `chmod +x install-unix.sh start-unix.sh start-linux.sh start-mac.command`
+2. Run `./install-unix.sh`
+3. Start with `./start-unix.sh`
 
-### On Windows
-- Double-click **`start-windows.bat`** on the USB drive
-- The AnythingLLM chat window will open automatically
-- Keep the black terminal window open while chatting
-- Press any key in the terminal to safely shut down
+Shortcuts:
 
-### On Mac
-- Double-click **`start-mac.command`** on the USB drive  
-- First time: It will automatically download the Mac engine (~2 min)
-- The AnythingLLM window will open automatically
-- Press ENTER in the terminal to safely shut down
+- macOS: double-click `start-mac.command`
+- Linux: run `./start-linux.sh`
 
-## 🔐 Privacy
+## Usage
 
-- **Zero footprint** — nothing is installed on the host computer
-- All AI data, chats, and settings stay on the USB drive
-- Works completely offline after initial setup
-- No telemetry, no cloud, no tracking
+`start-unix.sh` starts the Ollama server from the drive, ensures `gemma4:e4b` exists locally, and then opens an interactive `ollama run gemma4:e4b` session.
 
-## 📁 USB Drive Structure (After Setup)
+You can also pass direct Ollama commands through the launcher:
 
-```
-USB Drive/
-├── install.bat             ← Run this first (one time only)
-├── install-core.ps1        ← Setup script (called by install.bat)
-├── start-windows.bat       ← Windows launcher
-├── start-mac.command       ← Mac launcher
-├── ollama/                 ← AI engine (Windows)
-├── ollama_mac/             ← AI engine (Mac, auto-downloaded)
-├── models/                 ← AI model files
-├── anythingllm/            ← Chat interface app
-└── anythingllm_data/       ← Your chats & settings (portable!)
+```bash
+./start-unix.sh list
+./start-unix.sh ps
+./start-unix.sh run gemma4:e4b
 ```
 
-## ⚠️ Important Notes
+## Portable Layout
 
-- **First launch on a new computer** may take 30-60 seconds to load
-- The AI runs on your **CPU** — responses take 10-30 seconds depending on hardware
-- If you have a **GPU**, responses will be much faster
-- Always **safely eject** the USB before unplugging
+```text
+Portable-AI-USB/
+├── install.bat
+├── install-core.ps1
+├── install-unix.sh
+├── start-windows.bat
+├── start-mac.command
+├── start-linux.sh
+├── start-unix.sh
+├── portable-ai.conf
+├── ollama/
+│   ├── macos/
+│   ├── linux-<arch>/
+│   └── models/
+├── home/
+└── logs/
+```
 
-## 📜 License
+## Notes
 
-MIT License — See [LICENSE](LICENSE) for details.
+- macOS support depends on Ollama's own platform support. Current Ollama docs list macOS 14+ and Apple Silicon or x86 support: https://docs.ollama.com/macos
+- Linux tarballs are large because Ollama ships its runtime dependencies with them
+- The repo does not currently provide a Linux GUI wrapper like AnythingLLM; the Unix path is Ollama CLI/API first
+
+## License
+
+MIT. See [LICENSE](LICENSE).

@@ -59,18 +59,25 @@ The repo now includes a portable Python Ollama agent that can use filesystem too
 Setup:
 
 ```bash
-chmod +x install-python-tools.sh usb-tools
+chmod +x install-python-tools.sh usb-tools start-agent.sh start-agent.command
 ./install-python-tools.sh
 ```
 
 Examples:
 
 ```bash
+./start-agent.sh
 ./usb-tools doctor
 ./usb-tools doctor --check-server
 ./usb-tools ask "Find the Ollama-related project on this drive and summarize how it works."
 ./usb-tools chat
 ```
+
+Launch shortcuts:
+
+- macOS: double-click `start-agent.command`
+- Terminal: run `./start-agent.sh`
+- One-shot prompt: run `./usb-tools ask "your prompt"`
 
 Implementation notes:
 
@@ -95,6 +102,8 @@ Portable-AI-USB/
 ├── start-linux.sh
 ├── start-unix.sh
 ├── portable-ai.conf
+├── start-agent.command
+├── start-agent.sh
 ├── usb-tools
 ├── ollama/
 │   ├── macos/

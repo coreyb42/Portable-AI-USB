@@ -14,5 +14,5 @@ echo "Portable Python tools installed in:"
 echo "  $VENV_DIR"
 echo
 echo "Next steps:"
-echo "  ./usb-tools browse ."
-echo "  ./usb-tools index ."
+echo "  ./start-agent.sh"
+echo "  ./usb-tools ask \"Summarize this drive\""

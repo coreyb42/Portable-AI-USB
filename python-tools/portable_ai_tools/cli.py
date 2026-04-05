@@ -8,7 +8,7 @@ from ollama import Client, ResponseError
 from .agent import tool_map, tool_result_content
 from .config import load_settings
 from .fsops import resolve_in_scope
-from .indexer import catalog_stats, duplicate_sources, refresh_library
+from .indexer import catalog_sample, catalog_stats, duplicate_sources, refresh_library
 from .ollama_runtime import ensure_model, ensure_server, find_ollama_binary, server_running
 
 
@@ -221,6 +221,21 @@ def cmd_maint_duplicates(args: argparse.Namespace) -> dict:
     return {"duplicates": duplicate_sources(settings, args.limit)}
 
 
+def cmd_maint_sample(args: argparse.Namespace) -> dict:
+    settings = load_settings()
+    return {
+        "files": catalog_sample(
+            settings,
+            limit=args.limit,
+            category=args.category,
+            genre=args.genre,
+            tag=args.tag,
+            path_contains=args.path_contains,
+            filename_contains=args.filename_contains,
+        )
+    }
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Portable Ollama agent for the external drive.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -252,6 +267,15 @@ def build_parser() -> argparse.ArgumentParser:
     maint_duplicates = maint_subparsers.add_parser("duplicates", help="Show duplicate sources.")
     maint_duplicates.add_argument("--limit", type=int, default=50)
     maint_duplicates.set_defaults(func=cmd_maint_duplicates)
+
+    maint_sample = maint_subparsers.add_parser("sample", help="Show sample catalog rows with optional filters.")
+    maint_sample.add_argument("--limit", type=int, default=50)
+    maint_sample.add_argument("--category")
+    maint_sample.add_argument("--genre")
+    maint_sample.add_argument("--tag")
+    maint_sample.add_argument("--path-contains")
+    maint_sample.add_argument("--filename-contains")
+    maint_sample.set_defaults(func=cmd_maint_sample)
 
     return parser
 

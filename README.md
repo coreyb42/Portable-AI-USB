@@ -73,6 +73,7 @@ Examples:
 ./usb-tools maint refresh
 ./usb-tools maint stats
 ./usb-tools maint duplicates
+./usb-tools maint sample --category medical
 ./usb-tools ask "Find the Ollama-related project on this drive and summarize how it works."
 ./usb-tools chat
 ```
@@ -89,6 +90,8 @@ Implementation notes:
 - By default, tool paths resolve relative to `../..` from this repo checkout, which is treated as the drive root
 - Semantic search uses the local Ollama installation from this repo, not a host install
 - The agent internally exposes browse, search, read, exact quote location, index refresh, and semantic-search tools to the model
+- Catalog metadata includes filename, top-level collection, derived category, derived genre, and path-derived tags
+- Agent retrieval tools can filter on category, genre, tag, relative path substring, and filename substring
 - Quote and semantic results include file and page/section/line-style location metadata when available
 - `maint refresh` populates a SQLite-backed library catalog and semantic index, deduping files by content hash so duplicate sources are not embedded twice
 - The embedding model defaults to `nomic-embed-text` and is configured in `portable-ai.conf`

@@ -36,6 +36,7 @@ The SQLite database under `.portable_tools/semantic_index.sqlite3` stores:
 - High-level file catalog records
 - Duplicate tracking by content hash
 - Semantic chunks with location metadata
+- Derived metadata such as filename, top-level collection, category, genre, and tags
 
 The maintenance flow is:
 
@@ -52,6 +53,7 @@ The agent should be able to:
 - Read text, PDF, and EPUB files
 - Locate exact quotes with file and page/section/line references
 - Run semantic search over indexed passages with file and location metadata
+- Filter retrieval by category, genre, path substring, filename substring, and tags when useful
 
 ## Development Notes
 

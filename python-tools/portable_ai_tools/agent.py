@@ -18,6 +18,26 @@ ToolCallable = Callable[..., dict]
 class ToolContext:
     settings: Settings
 
+    def _filters(
+        self,
+        category: str | None = None,
+        genre: str | None = None,
+        tag: str | None = None,
+        path_contains: str | None = None,
+        filename_contains: str | None = None,
+    ) -> dict:
+        return {
+            key: value
+            for key, value in {
+                "category": category,
+                "genre": genre,
+                "tag": tag,
+                "path_contains": path_contains,
+                "filename_contains": filename_contains,
+            }.items()
+            if value
+        }
+
     def browse(
         self,
         path: str = ".",
@@ -74,19 +94,35 @@ class ToolContext:
                 break
         return {"path": display_path(self.settings, target), "entries": entries}
 
-    def search(self, query: str, path: str = ".", limit: int = 20) -> dict:
+    def search(
+        self,
+        query: str,
+        path: str = ".",
+        limit: int = 20,
+        category: str | None = None,
+        genre: str | None = None,
+        tag: str | None = None,
+        path_contains: str | None = None,
+        filename_contains: str | None = None,
+    ) -> dict:
         """Search file paths and text content on the external drive.
 
         Args:
           query: Query string to find in paths or text.
           path: Relative path from the drive root to search under.
           limit: Maximum number of matches to return.
+          category: Optional high-level category filter such as medical, survival, or fiction.
+          genre: Optional genre filter.
+          tag: Optional tag filter derived from path metadata.
+          path_contains: Optional substring filter applied to relative paths.
+          filename_contains: Optional substring filter applied to filenames.
 
         Returns:
           Matching file paths and snippets.
         """
         target = resolve_in_scope(self.settings, path)
-        return {"query": query, "results": plain_text_search(target, query, limit)}
+        filters = self._filters(category, genre, tag, path_contains, filename_contains)
+        return {"query": query, "filters": filters, "results": plain_text_search(target, query, limit, filters=filters)}
 
     def read(
         self,
@@ -133,27 +169,62 @@ class ToolContext:
         target = resolve_in_scope(self.settings, path)
         return refresh_library(self.settings, target, limit)
 
-    def locate_quote(self, quote: str, path: str = ".", limit: int = 10) -> dict:
+    def locate_quote(
+        self,
+        quote: str,
+        path: str = ".",
+        limit: int = 10,
+        category: str | None = None,
+        genre: str | None = None,
+        tag: str | None = None,
+        path_contains: str | None = None,
+        filename_contains: str | None = None,
+    ) -> dict:
         """Locate an exact phrase within files and return file/location references.
 
         Args:
           quote: Exact phrase to find.
           path: Relative path from the drive root to search under.
           limit: Maximum number of matches to return.
+          category: Optional high-level category filter such as medical, survival, or fiction.
+          genre: Optional genre filter.
+          tag: Optional tag filter derived from path metadata.
+          path_contains: Optional substring filter applied to relative paths.
+          filename_contains: Optional substring filter applied to filenames.
 
         Returns:
           Matching files with page, section, or line references.
         """
         target = resolve_in_scope(self.settings, path)
-        return {"quote": quote, "results": locate_exact_phrase(self.settings, quote, target, limit)}
+        filters = self._filters(category, genre, tag, path_contains, filename_contains)
+        return {
+            "quote": quote,
+            "filters": filters,
+            "results": locate_exact_phrase(self.settings, quote, target, limit, filters=filters),
+        }
 
-    def semantic_search(self, query: str, path: str = ".", limit: int = 5) -> dict:
+    def semantic_search(
+        self,
+        query: str,
+        path: str = ".",
+        limit: int = 5,
+        category: str | None = None,
+        genre: str | None = None,
+        tag: str | None = None,
+        path_contains: str | None = None,
+        filename_contains: str | None = None,
+    ) -> dict:
         """Search the semantic index for conceptually relevant content.
 
         Args:
           query: Semantic query text.
           path: Relative path from the drive root to filter the indexed corpus.
           limit: Maximum number of matches to return.
+          category: Optional high-level category filter such as medical, survival, or fiction.
+          genre: Optional genre filter.
+          tag: Optional tag filter derived from path metadata.
+          path_contains: Optional substring filter applied to relative paths.
+          filename_contains: Optional substring filter applied to filenames.
 
         Returns:
           Ranked semantic matches from indexed content.
@@ -164,9 +235,11 @@ class ToolContext:
         prefix = display_path(self.settings, target)
         if prefix == ".":
             prefix = None
-        matches = semantic_search(self.settings, query, limit, path_prefix=prefix)
+        filters = self._filters(category, genre, tag, path_contains, filename_contains)
+        matches = semantic_search(self.settings, query, limit, path_prefix=prefix, filters=filters)
         return {
             "query": query,
+            "filters": filters,
             "results": [
                 {
                     "path": match.path,

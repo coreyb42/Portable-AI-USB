@@ -10,6 +10,44 @@ from .config import load_settings
 from .ollama_runtime import ensure_model, ensure_server, find_ollama_binary, server_running
 
 
+def _format_tool_args(arguments: dict, max_length: int = 180) -> str:
+    raw = json.dumps(arguments, ensure_ascii=True, sort_keys=True)
+    if len(raw) <= max_length:
+        return raw
+    return f"{raw[: max_length - 3]}..."
+
+
+def _print_tool_event(name: str, arguments: dict, result: dict) -> None:
+    print(f"\n[tool] {name} {_format_tool_args(arguments)}")
+    if "error" in result:
+        print(f"[tool] {name} failed: {result['error']}")
+        return
+
+    if name == "browse":
+        count = len(result.get("entries", []))
+        print(f"[tool] {name} ok: {count} entries from {result.get('path', '.')}")
+        return
+    if name == "search":
+        count = len(result.get("results", []))
+        print(f"[tool] {name} ok: {count} matches")
+        return
+    if name == "read":
+        text_len = len(result.get("text", ""))
+        print(f"[tool] {name} ok: {result.get('path')} ({text_len} chars)")
+        return
+    if name == "index":
+        print(
+            f"[tool] {name} ok: indexed={result.get('indexed_files', 0)} "
+            f"skipped={result.get('skipped_files', 0)}"
+        )
+        return
+    if name == "semantic_search":
+        count = len(result.get("results", []))
+        print(f"[tool] {name} ok: {count} semantic matches")
+        return
+    print(f"[tool] {name} ok")
+
+
 def cmd_doctor(args: argparse.Namespace) -> dict:
     settings = load_settings()
     payload = {
@@ -89,6 +127,7 @@ def _run_agent_turn(client: Client, model: str, messages: list[dict], settings) 
                     result = available[name](**arguments)
                 except Exception as exc:
                     result = {"error": str(exc), "tool": name, "arguments": arguments}
+            _print_tool_event(name, arguments, result)
             messages.append(
                 {
                     "role": "tool",

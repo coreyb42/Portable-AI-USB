@@ -58,6 +58,8 @@ The repo now includes a portable Python toolkit intended for LLM-facing file acc
 - `read`: structured reader for text, PDF, and EPUB files
 - `index`: semantic chunk indexing into a SQLite database on the drive
 - `semantic-search`: embedding search against the indexed chunks
+- `ask`: one-shot Ollama agent with tool calling
+- `chat`: interactive Ollama agent with tool calling
 
 Setup:
 
@@ -69,19 +71,24 @@ chmod +x install-python-tools.sh usb-tools
 Examples:
 
 ```bash
-./usb-tools browse .
-./usb-tools search "portable ollama" .
-./usb-tools read README.md
+./usb-tools browse
+./usb-tools browse ai --recursive --max-depth 1
+./usb-tools search "portable ollama"
+./usb-tools read ai/Portable-AI-USB/README.md
 ./usb-tools doctor
 ./usb-tools doctor --check-server
-./usb-tools index .
+./usb-tools index
 ./usb-tools semantic-search "Where is the Ollama model store configured?"
+./usb-tools ask "Find the Ollama-related project on this drive and summarize how it works."
+./usb-tools chat
 ```
 
 Implementation notes:
 
 - The Python tools keep state under `.portable_tools/` on the USB drive
+- By default, tool paths resolve relative to `../..` from this repo checkout, which is treated as the drive root
 - Semantic search uses the local Ollama installation from this repo, not a host install
+- The `ask` and `chat` commands bind Python tool functions directly into Ollama's tool-calling loop
 - The embedding model defaults to `nomic-embed-text` and is configured in `portable-ai.conf`
 - `doctor --check-server` validates that the portable Ollama runtime can actually start on the current machine before you spend time indexing
 

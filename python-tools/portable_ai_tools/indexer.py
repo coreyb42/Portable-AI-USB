@@ -108,7 +108,7 @@ def index_paths(settings: Settings, target: Path, limit: int | None = None) -> d
         if limit is not None and indexed >= limit:
             break
         stat = path.stat()
-        display_path = _relative_display(settings.root_dir, path)
+        display_path = _relative_display(settings.scope_root, path)
         try:
             content = read_path(path)
         except Exception:

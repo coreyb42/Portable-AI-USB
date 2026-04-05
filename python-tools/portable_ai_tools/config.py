@@ -21,6 +21,7 @@ def _read_shell_config(path: Path) -> dict[str, str]:
 @dataclass(frozen=True)
 class Settings:
     root_dir: Path
+    scope_root: Path
     data_dir: Path
     index_db: Path
     logs_dir: Path
@@ -36,6 +37,7 @@ def load_settings() -> Settings:
     data_dir = root_dir / ".portable_tools"
     return Settings(
         root_dir=root_dir,
+        scope_root=(root_dir / "../..").resolve(),
         data_dir=data_dir,
         index_db=data_dir / "semantic_index.sqlite3",
         logs_dir=root_dir / "logs",

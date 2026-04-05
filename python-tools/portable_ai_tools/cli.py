@@ -208,7 +208,26 @@ def cmd_maint_refresh(args: argparse.Namespace) -> dict:
     ensure_server(settings)
     ensure_model(settings, settings.embed_model)
     target = resolve_in_scope(settings, args.path)
-    return refresh_library(settings, target, args.limit)
+
+    def progress(update: dict) -> None:
+        current = update["current"]
+        total = update["total"]
+        path = update["path"]
+        status = update["status"]
+        print(
+            f"[refresh] {current}/{total} {status:<9} "
+            f"updated={update['updated']} unchanged={update['unchanged']} "
+            f"duplicates={update['duplicates']} errors={update['errors']} :: {path}"
+        )
+
+    print(f"Refreshing library index under: {target}")
+    print("This is resumable: already indexed unchanged files will be skipped on the next run.")
+    result = refresh_library(settings, target, args.limit, progress_callback=progress)
+    print(
+        "Refresh complete. Re-running this command resumes from the current catalog and "
+        "skips unchanged files."
+    )
+    return result
 
 
 def cmd_maint_stats(args: argparse.Namespace) -> dict:

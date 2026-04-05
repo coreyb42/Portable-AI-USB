@@ -94,6 +94,7 @@ Implementation notes:
 - Agent retrieval tools can filter on category, genre, tag, relative path substring, and filename substring
 - Quote and semantic results include file and page/section/line-style location metadata when available
 - `maint refresh` populates a SQLite-backed library catalog and semantic index, deduping files by content hash so duplicate sources are not embedded twice
+- `maint refresh` now prints per-file progress and is resumable because it commits work file-by-file and skips unchanged files on later runs
 - The embedding model defaults to `qwen3-embedding:4b` and is configured in `portable-ai.conf`
 - `doctor --check-server` validates that the portable Ollama runtime can actually start on the current machine before you spend time indexing
 

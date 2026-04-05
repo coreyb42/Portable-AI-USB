@@ -269,18 +269,25 @@ def _file_record(path: Path, display_path: str, content: ReadResult, content_has
         "indexed_at": time.time(),
     }
 
-
-def refresh_library(settings: Settings, target: Path, limit: int | None = None) -> dict:
+def refresh_library(
+    settings: Settings,
+    target: Path,
+    limit: int | None = None,
+    progress_callback=None,
+) -> dict:
     connection = connect_db(settings.index_db)
     processed = 0
     updated = 0
     unchanged = 0
     duplicates = 0
     errors = 0
+    paths = _walk_files(target)
+    total = len(paths)
+    if limit is not None:
+        paths = paths[:limit]
+        total = len(paths)
 
-    for path in _walk_files(target):
-        if limit is not None and processed >= limit:
-            break
+    for path in paths:
         processed += 1
         display_path = _relative_display(settings.scope_root, path)
         stat = path.stat()
@@ -288,6 +295,19 @@ def refresh_library(settings: Settings, target: Path, limit: int | None = None) 
             content = read_path(path)
         except Exception:
             errors += 1
+            if progress_callback:
+                progress_callback(
+                    {
+                        "current": processed,
+                        "total": total,
+                        "path": display_path,
+                        "status": "error",
+                        "updated": updated,
+                        "unchanged": unchanged,
+                        "duplicates": duplicates,
+                        "errors": errors,
+                    }
+                )
             continue
 
         content_hash = _content_hash(content.text)
@@ -302,6 +322,19 @@ def refresh_library(settings: Settings, target: Path, limit: int | None = None) 
             and existing["content_hash"] == content_hash
         ):
             unchanged += 1
+            if progress_callback:
+                progress_callback(
+                    {
+                        "current": processed,
+                        "total": total,
+                        "path": display_path,
+                        "status": "unchanged",
+                        "updated": updated,
+                        "unchanged": unchanged,
+                        "duplicates": duplicates,
+                        "errors": errors,
+                    }
+                )
             continue
 
         record = _file_record(path, display_path, content, content_hash)
@@ -404,9 +437,23 @@ def refresh_library(settings: Settings, target: Path, limit: int | None = None) 
                         chunk_rows,
                     )
         updated += 1
+        if progress_callback:
+            progress_callback(
+                {
+                    "current": processed,
+                    "total": total,
+                    "path": display_path,
+                    "status": "duplicate" if duplicate_of else "updated",
+                    "updated": updated,
+                    "unchanged": unchanged,
+                    "duplicates": duplicates,
+                    "errors": errors,
+                }
+            )
 
     return {
         "processed_files": processed,
+        "total_files": total,
         "updated_files": updated,
         "unchanged_files": unchanged,
         "duplicate_files": duplicates,

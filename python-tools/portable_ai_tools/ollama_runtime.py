@@ -133,11 +133,28 @@ def stop_server() -> None:
     _SERVER_PROCESS = None
 
 
+def _normalize_model_name(model: str) -> str:
+    if ":" not in model:
+        return f"{model}:latest"
+    return model
+
+
+def _model_variants(model: str) -> set[str]:
+    normalized = _normalize_model_name(model)
+    base, _, tag = normalized.partition(":")
+    variants = {normalized, model}
+    if tag == "latest":
+        variants.add(base)
+    else:
+        variants.add(f"{base}:latest")
+    return {item for item in variants if item}
+
+
 def ensure_model(settings: Settings, model: str) -> None:
     ensure_server(settings)
     tags = _request_json(settings, "/api/tags")
     names = {item["name"] for item in tags.get("models", [])}
-    if model in names:
+    if _model_variants(model) & names:
         return
     binary = find_ollama_binary(settings)
     subprocess.run([str(binary), "pull", model], check=True, cwd=settings.root_dir, env=_runtime_env(settings))

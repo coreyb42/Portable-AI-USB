@@ -7,6 +7,8 @@ from ollama import Client, ResponseError
 
 from .agent import tool_map, tool_result_content
 from .config import load_settings
+from .fsops import resolve_in_scope
+from .indexer import catalog_stats, duplicate_sources, refresh_library
 from .ollama_runtime import ensure_model, ensure_server, find_ollama_binary, server_running
 
 
@@ -37,9 +39,13 @@ def _print_tool_event(name: str, arguments: dict, result: dict) -> None:
         return
     if name == "index":
         print(
-            f"[tool] {name} ok: indexed={result.get('indexed_files', 0)} "
-            f"skipped={result.get('skipped_files', 0)}"
+            f"[tool] {name} ok: updated={result.get('updated_files', 0)} "
+            f"unchanged={result.get('unchanged_files', 0)} duplicates={result.get('duplicate_files', 0)}"
         )
+        return
+    if name == "locate_quote":
+        count = len(result.get("results", []))
+        print(f"[tool] {name} ok: {count} exact matches")
         return
     if name == "semantic_search":
         count = len(result.get("results", []))
@@ -197,6 +203,24 @@ def cmd_chat(args: argparse.Namespace) -> dict:
     return None
 
 
+def cmd_maint_refresh(args: argparse.Namespace) -> dict:
+    settings = load_settings()
+    ensure_server(settings)
+    ensure_model(settings, settings.embed_model)
+    target = resolve_in_scope(settings, args.path)
+    return refresh_library(settings, target, args.limit)
+
+
+def cmd_maint_stats(args: argparse.Namespace) -> dict:
+    settings = load_settings()
+    return catalog_stats(settings)
+
+
+def cmd_maint_duplicates(args: argparse.Namespace) -> dict:
+    settings = load_settings()
+    return {"duplicates": duplicate_sources(settings, args.limit)}
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Portable Ollama agent for the external drive.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -213,6 +237,21 @@ def build_parser() -> argparse.ArgumentParser:
     chat = subparsers.add_parser("chat", help="Interactive agentic chat with tool calling.")
     chat.add_argument("--model", default=load_settings().model_name)
     chat.set_defaults(func=cmd_chat)
+
+    maint = subparsers.add_parser("maint", help="Library maintenance commands.")
+    maint_subparsers = maint.add_subparsers(dest="maint_command", required=True)
+
+    maint_refresh = maint_subparsers.add_parser("refresh", help="Refresh the catalog and semantic index.")
+    maint_refresh.add_argument("path", nargs="?", default=".")
+    maint_refresh.add_argument("--limit", type=int)
+    maint_refresh.set_defaults(func=cmd_maint_refresh)
+
+    maint_stats = maint_subparsers.add_parser("stats", help="Show catalog statistics.")
+    maint_stats.set_defaults(func=cmd_maint_stats)
+
+    maint_duplicates = maint_subparsers.add_parser("duplicates", help="Show duplicate sources.")
+    maint_duplicates.add_argument("--limit", type=int, default=50)
+    maint_duplicates.set_defaults(func=cmd_maint_duplicates)
 
     return parser
 

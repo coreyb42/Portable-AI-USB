@@ -6,7 +6,7 @@ from typing import Callable
 
 from .config import Settings
 from .fsops import display_path, resolve_in_scope
-from .indexer import index_paths, plain_text_search, semantic_search
+from .indexer import locate_exact_phrase, plain_text_search, refresh_library, semantic_search
 from .ollama_runtime import ensure_model, ensure_server
 from .readers import read_path
 
@@ -119,7 +119,7 @@ class ToolContext:
         return payload
 
     def index(self, path: str = ".", limit: int | None = None) -> dict:
-        """Build or refresh the semantic index for supported files.
+        """Build or refresh the semantic index and file catalog for supported files.
 
         Args:
           path: Relative path from the drive root to index.
@@ -131,13 +131,28 @@ class ToolContext:
         ensure_server(self.settings)
         ensure_model(self.settings, self.settings.embed_model)
         target = resolve_in_scope(self.settings, path)
-        return index_paths(self.settings, target, limit)
+        return refresh_library(self.settings, target, limit)
 
-    def semantic_search(self, query: str, limit: int = 5) -> dict:
+    def locate_quote(self, quote: str, path: str = ".", limit: int = 10) -> dict:
+        """Locate an exact phrase within files and return file/location references.
+
+        Args:
+          quote: Exact phrase to find.
+          path: Relative path from the drive root to search under.
+          limit: Maximum number of matches to return.
+
+        Returns:
+          Matching files with page, section, or line references.
+        """
+        target = resolve_in_scope(self.settings, path)
+        return {"quote": quote, "results": locate_exact_phrase(self.settings, quote, target, limit)}
+
+    def semantic_search(self, query: str, path: str = ".", limit: int = 5) -> dict:
         """Search the semantic index for conceptually relevant content.
 
         Args:
           query: Semantic query text.
+          path: Relative path from the drive root to filter the indexed corpus.
           limit: Maximum number of matches to return.
 
         Returns:
@@ -145,7 +160,11 @@ class ToolContext:
         """
         ensure_server(self.settings)
         ensure_model(self.settings, self.settings.embed_model)
-        matches = semantic_search(self.settings, query, limit)
+        target = resolve_in_scope(self.settings, path)
+        prefix = display_path(self.settings, target)
+        if prefix == ".":
+            prefix = None
+        matches = semantic_search(self.settings, query, limit, path_prefix=prefix)
         return {
             "query": query,
             "results": [
@@ -168,6 +187,7 @@ def tool_map(settings: Settings) -> dict[str, ToolCallable]:
         "search": ctx.search,
         "read": ctx.read,
         "index": ctx.index,
+        "locate_quote": ctx.locate_quote,
         "semantic_search": ctx.semantic_search,
     }
 

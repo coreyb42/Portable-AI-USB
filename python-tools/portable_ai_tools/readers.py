@@ -53,12 +53,27 @@ def _is_probably_text(path: Path) -> bool:
 
 def read_text_file(path: Path) -> ReadResult:
     text = path.read_text(encoding="utf-8", errors="replace")
+    lines = text.splitlines()
+    sections: list[dict] = []
+    block_size = 80
+    for start in range(0, len(lines), block_size):
+        end = min(start + block_size, len(lines))
+        block = "\n".join(lines[start:end]).strip()
+        if not block:
+            continue
+        sections.append(
+            {
+                "line_start": start + 1,
+                "line_end": end,
+                "text": block,
+            }
+        )
     return ReadResult(
         path=str(path),
         file_type="text",
         text=text,
-        sections=[],
-        metadata={"size": path.stat().st_size},
+        sections=sections,
+        metadata={"size": path.stat().st_size, "title": path.stem},
     )
 
 
@@ -78,7 +93,7 @@ def read_pdf_file(path: Path) -> ReadResult:
         file_type="pdf",
         text="\n\n".join(texts).strip(),
         sections=sections,
-        metadata={"pages": len(reader.pages), "size": path.stat().st_size},
+        metadata={"pages": len(reader.pages), "size": path.stat().st_size, "title": path.stem},
     )
 
 
@@ -113,7 +128,7 @@ def read_epub_file(path: Path) -> ReadResult:
         file_type="epub",
         text="\n\n".join(texts).strip(),
         sections=sections,
-        metadata={"sections": len(sections), "size": path.stat().st_size},
+        metadata={"sections": len(sections), "size": path.stat().st_size, "title": path.stem},
     )
 
 

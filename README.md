@@ -55,6 +55,7 @@ The repo now includes a portable Python Ollama agent that can use filesystem too
 
 - `ask`: one-shot Ollama agent with tool calling
 - `chat`: interactive Ollama agent with tool calling
+- `maint`: maintenance commands for the file catalog and semantic index
 
 Setup:
 
@@ -69,6 +70,9 @@ Examples:
 ./start-agent.sh
 ./usb-tools doctor
 ./usb-tools doctor --check-server
+./usb-tools maint refresh
+./usb-tools maint stats
+./usb-tools maint duplicates
 ./usb-tools ask "Find the Ollama-related project on this drive and summarize how it works."
 ./usb-tools chat
 ```
@@ -84,7 +88,9 @@ Implementation notes:
 - The Python agent keeps its semantic index and working state under `.portable_tools/` on the USB drive
 - By default, tool paths resolve relative to `../..` from this repo checkout, which is treated as the drive root
 - Semantic search uses the local Ollama installation from this repo, not a host install
-- The agent internally exposes browse, search, read, index, and semantic-search tools to the model, but those are no longer standalone user-facing commands
+- The agent internally exposes browse, search, read, exact quote location, index refresh, and semantic-search tools to the model
+- Quote and semantic results include file and page/section/line-style location metadata when available
+- `maint refresh` populates a SQLite-backed library catalog and semantic index, deduping files by content hash so duplicate sources are not embedded twice
 - The embedding model defaults to `nomic-embed-text` and is configured in `portable-ai.conf`
 - `doctor --check-server` validates that the portable Ollama runtime can actually start on the current machine before you spend time indexing
 
